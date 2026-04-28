@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mono Stories Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:#1c2c44; --beige:#f2ece5; --darkred:#660000; --mauve:#936c80;
+  --beige2:#faf7f4; --border:#e0d8d0; --text:#2a2a2a; --muted:#888;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--beige);font-family:'Noto Sans JP',sans-serif;color:var(--text);font-size:12px;}
+
+/* HEADER */
+.header{background:var(--navy);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;gap:12px;flex-wrap:wrap;}
+.header-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--beige);}
+.header-sub{font-size:9px;color:var(--mauve);letter-spacing:.12em;}
+.header-right{display:flex;gap:8px;align-items:center;}
+.fw-wrap{display:flex;align-items:center;gap:6px;}
+.fw-label{font-size:10px;color:rgba(242,236,229,.6);}
+.fw-input{width:80px;background:rgba(255,255,255,.1);border:1px solid rgba(242,236,229,.3);color:var(--beige);padding:5px 8px;font-size:11px;font-family:'Noto Sans JP',sans-serif;text-align:right;}
+.export-btn{background:var(--mauve);color:var(--beige);border:none;padding:7px 13px;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+
+/* SEARCH BAR */
+.search-bar{background:#16253c;padding:10px 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.search-wrap{position:relative;flex:1;min-width:200px;}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.5;}
+.search-wrap input{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(242,236,229,.2);color:var(--beige);padding:7px 10px 7px 30px;font-size:11px;font-family:'Noto Sans JP',sans-serif;outline:none;}
+.search-wrap input::placeholder{color:rgba(242,236,229,.4);}
+.filter-select{background:rgba(255,255,255,.08);border:1px solid rgba(242,236,229,.2);color:var(--beige);padding:6px 9px;font-size:11px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;}
+.filter-select option{background:var(--navy);}
+.tag-filters{display:flex;gap:6px;flex-wrap:wrap;}
+.tag-filter-btn{padding:3px 10px;font-size:10px;border:1px solid rgba(242,236,229,.25);background:transparent;color:rgba(242,236,229,.7);cursor:pointer;border-radius:20px;}
+.tag-filter-btn.active{background:var(--mauve);border-color:var(--mauve);color:var(--beige);}
+.clear-btn{background:none;border:1px solid rgba(242,236,229,.2);color:rgba(242,236,229,.6);padding:5px 10px;font-size:10px;cursor:pointer;}
+.result-count{font-size:10px;color:rgba(242,236,229,.5);white-space:nowrap;}
+
+/* STATS BAR */
+.stats-bar{display:flex;gap:20px;padding:10px 20px;background:var(--navy);border-top:1px solid rgba(242,236,229,.08);}
+.stat{text-align:center;}
+.stat-label{font-size:9px;color:var(--mauve);letter-spacing:.1em;}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--beige);font-weight:600;}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;}
+
+/* ============ カードビュー（スマホ用） ============ */
+.card-view{display:none;padding:12px 8px;}
+.story-card{
+  background:#fff;
+  border-radius:14px;
+  margin-bottom:14px;
+  box-shadow:0 1px 4px rgba(0,0,0,0.06);
+  overflow:hidden;
+  border:1px solid #f0ebe5;
+}
+.story-card.card-sale{
+  background:linear-gradient(180deg,#ffe6f0 0%,#fff5f9 100%);
+  border-left:4px solid #d4567a;
+}
+.card-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 14px;
+  border-bottom:1px solid #f0ebe5;
+}
+.card-num{
+  font-size:12px;
+  color:#999;
+  font-weight:600;
+}
+.card-date-block{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.card-date{
+  font-size:15px;
+  font-weight:700;
+  color:#3d2f24;
+}
+.story-card.card-sale .card-date{color:#a01448;}
+.card-youbi-pill{
+  display:inline-block;
+  background:#e8e3db;
+  color:#5a4a3a;
+  padding:1px 7px;
+  border-radius:10px;
+  font-size:11px;
+  font-weight:600;
+}
+.story-card.card-sale .card-youbi-pill{background:#d4567a;color:#fff;}
+.card-time{
+  font-size:11px;
+  color:#888;
+}
+.card-event{
+  padding:6px 14px;
+  font-size:12px;
+  color:#993333;
+  background:#fce4ec;
+  font-weight:600;
+}
+.story-card.card-sale .card-event{
+  background:transparent;
+  color:#a01448;
+}
+.card-img{
+  width:100%;
+  display:block;
+  background:#000;
+}
+.card-img-placeholder{
+  width:100%;
+  aspect-ratio:9/16;
+  background:#faf7f4;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  color:#bbb;
+  border:1px dashed #ccc;
+  cursor:pointer;
+  position:relative;
+}
+.card-caption{
+  padding:10px 14px;
+  font-size:12px;
+  color:#444;
+  line-height:1.6;
+  word-break:break-word;
+}
+.card-stats{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:1px;
+  background:#f0ebe5;
+  padding:1px 0;
+  border-top:1px solid #f0ebe5;
+}
+.card-stat{
+  background:#fff;
+  padding:8px 12px;
+  text-align:center;
+}
+.story-card.card-sale .card-stat{background:#fff9fc;}
+.card-stat-label{
+  font-size:10px;
+  color:#888;
+  margin-bottom:2px;
+}
+.card-stat-value{
+  font-size:14px;
+  font-weight:700;
+  color:#3d2f24;
+}
+.card-stat-value.rate-high{color:#1a7a1a;}
+.card-stat-value.rate-low{color:#993333;}
+.card-tags{
+  padding:8px 14px;
+  border-top:1px solid #f0ebe5;
+  display:flex;
+  flex-wrap:wrap;
+  gap:3px;
+  align-items:center;
+}
+.card-memo{
+  padding:8px 14px;
+  border-top:1px solid #f0ebe5;
+}
+.card-memo textarea{
+  width:100%;
+  border:1px solid #e2dfd9;
+  background:#fff;
+  font-size:12px;
+  color:#333;
+  font-family:inherit;
+  resize:vertical;
+  outline:none;
+  min-height:50px;
+  padding:6px 8px;
+  border-radius:6px;
+  line-height:1.5;
+}
+
+/* ============ レスポンシブ切替（768px以下でカード表示） ============ */
+@media (max-width: 768px){
+  .table-wrap{display:none;}
+  .card-view{display:block;}
+  .header-title{font-size:18px !important;}
+  .header-sub{font-size:10px !important;}
+  .controls{padding:10px !important;}
+  .tag-filter-row{overflow-x:auto;flex-wrap:nowrap !important;padding-bottom:4px;}
+  .tag-filter-btn{flex-shrink:0;}
+}
+table{width:100%;border-collapse:collapse;min-width:900px;}
+thead{position:sticky;top:56px;z-index:10;}
+thead tr{background:var(--navy);}
+thead th{padding:10px 6px 12px 6px;font-size:9px;font-weight:400;letter-spacing:.08em;color:var(--beige);text-align:center;border-right:1px solid rgba(242,236,229,.1);border-bottom:3px solid var(--mauve);white-space:pre-line;vertical-align:middle;}
+thead th:last-child{border-right:none;}
+tbody tr{border-bottom:1px solid var(--border);}
+tbody tr:hover{background:rgba(147,108,128,.05);}
+tbody td{padding:10px 6px;text-align:center;vertical-align:middle;border-right:1px solid var(--border);}
+tbody tr:first-child td{padding-top:14px;}
+tbody td:last-child{border-right:none;}
+
+/* セル */
+.td-num{font-size:11px;color:var(--muted);width:32px;}
+.td-date{font-weight:500;white-space:nowrap;}
+.td-youbi{display:inline-block;padding:1px 5px;font-size:10px;background:rgba(147,108,128,.12);color:var(--mauve);}
+.td-rate{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;}
+.rate-high{color:var(--darkred);}
+.rate-mid{color:var(--mauve);}
+.rate-low{color:#aaa;}
+
+/* 画像セル */
+.img-cell{width:120px;padding:6px;overflow:hidden;vertical-align:middle;}
+.img-wrap{width:100px;height:178px;margin:0 auto;position:relative;cursor:pointer;overflow:hidden;border-radius:6px;}
+.img-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.img-placeholder{width:100%;height:100%;background:var(--beige2);border:1.5px dashed var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:border-color .2s;}
+.img-placeholder:hover{border-color:var(--mauve);}
+.img-placeholder input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:10;}
+.img-placeholder-icon{font-size:20px;color:#ccc;}
+.img-placeholder-text{font-size:9px;color:#bbb;}
+.img-zoom{position:absolute;bottom:4px;right:4px;background:rgba(28,44,68,.7);color:var(--beige);font-size:9px;padding:2px 5px;opacity:0;transition:opacity .2s;}
+.img-wrap:hover .img-zoom{opacity:1;}
+
+/* タグ */
+.tags-cell{text-align:left;padding:6px 8px;min-width:120px;}
+.tag{display:inline-block;padding:1px 7px;font-size:9px;border-radius:12px;margin:1px;cursor:pointer;}
+.tag-launch{background:#fce8e8;color:#993333;}
+.tag-benefit{background:#e8f0fc;color:#1a4fa5;}
+.tag-product{background:#e8fce8;color:#1a7a1a;}
+.tag-collab{background:#f5e8fc;color:#6a1a8a;}
+.tag-popup{background:#fce8f5;color:#8a1a6a;}
+.tag-sale{background:linear-gradient(135deg,#d4567a,#a01448);color:#fff;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+.tag-restock{background:#fcf0e8;color:#a05010;}
+.tag-other{background:#f0f0f0;color:#555;}
+.row-sale{background:linear-gradient(90deg,#ffe6f0 0%,#fff5f9 100%) !important;border-left:4px solid #d4567a;}
+.row-sale .td-date{color:#a01448;font-weight:700;}
+.row-sale .td-youbi{background:#d4567a;color:#fff;}
+.row-sale .td-event{color:#a01448;font-weight:700;}
+.add-tag-btn{display:inline-block;padding:1px 7px;font-size:9px;border:1px dashed #ccc;border-radius:12px;color:#aaa;cursor:pointer;margin:1px;}
+.add-tag-btn:hover{border-color:var(--mauve);color:var(--mauve);}
+
+/* イベント */
+.td-event{font-size:11px;color:var(--dark-red);font-weight:600;line-height:1.4;padding:6px 6px;word-break:break-word;white-space:normal;}
+.td-event.has-event{background:#fce4ec;}
+/* メモ */
+.memo-input{width:100%;border:1px solid #e2dfd9;background:#fff;font-size:11px;color:#333;font-family:'Noto Sans JP',sans-serif;resize:vertical;outline:none;min-height:42px;padding:5px 6px;border-radius:4px;line-height:1.4;}
+.memo-input:focus{border-color:var(--mauve);background:#fffdf9;}
+.memo-input::placeholder{color:#c2b8ad;}
+
+/* ACTION */
+.edit-btn{background:none;border:none;color:#ccc;cursor:pointer;font-size:12px;padding:2px 4px;}
+.edit-btn:hover{color:var(--mauve);}
+
+/* LIGHTBOX */
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:200;align-items:center;justify-content:center;}
+.lightbox.open{display:flex;}
+.lb-inner{max-width:480px;width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;}
+.lb-inner img{max-height:82vh;max-width:100%;object-fit:contain;}
+.lb-meta{color:rgba(255,255,255,.7);font-size:12px;text-align:center;line-height:1.8;}
+.lb-close{position:fixed;top:16px;right:20px;background:none;border:none;color:white;font-size:24px;cursor:pointer;opacity:.6;}
+
+/* TAG PICKER MODAL */
+.tag-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;align-items:center;justify-content:center;}
+.tag-modal.open{display:flex;}
+.tag-modal-box{background:var(--beige);padding:20px;width:300px;}
+.tag-modal-title{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;margin-bottom:14px;color:var(--navy);}
+.tag-opts{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;}
+.tag-opt{padding:4px 12px;font-size:11px;border:1px solid var(--border);cursor:pointer;border-radius:12px;background:transparent;color:var(--text);}
+.tag-opt.sel{border-color:var(--navy);background:var(--navy);color:var(--beige);}
+.tag-modal-btns{display:flex;gap:8px;justify-content:flex-end;}
+.tag-save-btn{background:var(--navy);color:var(--beige);border:none;padding:7px 16px;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.tag-cancel-btn{background:none;border:1px solid var(--border);color:var(--text);padding:7px 14px;font-size:11px;cursor:pointer;}
+
+.no-results{text-align:center;padding:48px;color:#999;font-size:13px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">mono Stories Analytics</div>
+    <div class="header-sub">INSTAGRAM STORIES — 3月投稿分析</div>
+  </div>
+  <div class="header-right">
+    <button class="export-btn" onclick="exportHTML()">⬇ 書き出す</button>
+  </div>
+</div>
+
+<div class="search-bar">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="キーワード検索（例：ベネフィット・ローンチ・ぬいホルダー）" oninput="applyFilters()">
+  </div>
+  <select class="filter-select" id="filterYoubi" onchange="applyFilters()">
+    <option value="">全曜日</option>
+    <option>月</option><option>火</option><option>水</option>
+    <option>木</option><option>金</option><option>土</option><option>日</option>
+  </select>
+  <select class="filter-select" id="sortBy" onchange="applyFilters()">
+    <option value="id">デフォルト順</option>
+    <option value="views_desc">閲覧数が多い順</option>
+    <option value="rate_desc">閲覧率が高い順</option>
+    <option value="link_desc">リンクCTが多い順</option>
+  </select>
+  <button class="clear-btn" onclick="clearFilters()">クリア</button>
+  <span class="result-count" id="resultCount"></span>
+</div>
+<div class="search-bar" style="padding-top:6px;padding-bottom:8px;">
+  <div class="tag-filters" id="tagFilters">
+    <button class="tag-filter-btn active" data-tag="" onclick="setTagFilter(this,'')">すべて</button>
+    <button class="tag-filter-btn" data-tag="販売会" onclick="setTagFilter(this,'販売会')" style="background:linear-gradient(135deg,#d4567a,#a01448);color:#fff;border:none;font-weight:600;">🛍️ 販売会</button>
+    <button class="tag-filter-btn" data-tag="イベント" onclick="setTagFilter(this,'イベント')">イベント</button>
+    <button class="tag-filter-btn" data-tag="ベネフィット訴求" onclick="setTagFilter(this,'ベネフィット訴求')">ベネフィット訴求</button>
+    <button class="tag-filter-btn" data-tag="商品紹介" onclick="setTagFilter(this,'商品紹介')">商品紹介</button>
+    <button class="tag-filter-btn" data-tag="コラボ" onclick="setTagFilter(this,'コラボ')">コラボ</button>
+    <button class="tag-filter-btn" data-tag="POPUP" onclick="setTagFilter(this,'POPUP')">POPUP</button>
+    <button class="tag-filter-btn" data-tag="再販" onclick="setTagFilter(this,'再販')">再販</button>
+    <button class="tag-filter-btn" data-tag="その他" onclick="setTagFilter(this,'その他')">その他</button>
+  </div>
+</div>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th style="width:32px">#</th>
+      <th style="width:52px">日付</th>
+      <th style="width:40px">曜日</th>
+      <th style="width:150px">イベント</th>
+      <th style="width:120px">ストーリーズ</th>
+      <th style="width:60px">閲覧数</th>
+      <th style="width:60px">リーチ</th>
+      <th style="width:55px">プロフ
+アクセス</th>
+      <th style="width:60px">プロフ
+アクセス率</th>
+      <th style="width:55px">リンク
+CT</th>
+      <th style="width:140px">タグ</th>
+      <th style="width:160px">メモ</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+</div>
+<div class="card-view" id="cardView"></div>
+<div class="no-results" id="noResults" style="display:none">該当する投稿が見つかりません</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lb-close">✕</button>
+  <div class="lb-inner" onclick="event.stopPropagation()">
+    <img id="lbImg" src="">
+    <div class="lb-meta" id="lbMeta"></div>
+  </div>
+</div>
+
+<!-- Tag Modal -->
+<div class="tag-modal" id="tagModal">
+  <div class="tag-modal-box">
+    <div class="tag-modal-title">タグを選択</div>
+    <div class="tag-opts" id="tagOpts">
+      <button class="tag-opt" onclick="toggleTagOpt(this)" data-tag="イベント">イベント</button>
+      <button class="tag-opt" onclick="toggleTagOpt(this)" data-tag="ベネフィット訴求">ベネフィット訴求</button>
+      <button class="tag-opt" onclick="toggleTagOpt(this)" data-tag="商品紹介">商品紹介</button>
+      <button class="tag-opt" onclick="toggleTagOpt(this)" data-tag="コラボ">コラボ</button>
+      <button class="tag-opt" onclick="toggleTagOpt(this)" data-tag="POPUP">POPUP</button>
+      <button class="tag-opt" onclick="toggleTagOpt(this)" data-tag="再販">再販</button>
+      <button class="tag-opt" onclick="toggleTagOpt(this)" data-tag="その他">その他</button>
+    </div>
+    <div class="tag-modal-btns">
+      <button class="tag-cancel-btn" onclick="closeTagModal()">キャンセル</button>
+      <button class="tag-save-btn" onclick="saveTagModal()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let entries = [{"date": "3/1", "youbi": "日", "time": "04:43", "event": "", "img": "images/01.jpg", "views": 490, "reach": 392, "prof": 6, "navi": 404, "link": 5, "caption": "", "memo": "", "tags": []}, {"date": "3/1", "youbi": "日", "time": "04:46", "event": "", "img": "images/02.jpg", "views": 446, "reach": 352, "prof": 3, "navi": 389, "link": 14, "caption": "\\ 本 日 2 3 : 5 9 ま で / 残 り 時 間 は あ と わ ず か . . .\n\n最 後 の ひ と 時 を お 楽 し み く だ さ い .\n\n本 日 シ ョ ッ プ ク ロ ー ズ で す . 👆", "memo": "", "tags": []}, {"date": "3/1", "youbi": "日", "time": "06:00", "event": "", "img": "images/03.jpg", "views": 418, "reach": 347, "prof": 2, "navi": 374, "link": 7, "caption": "", "memo": "", "tags": []}, {"date": "3/1", "youbi": "日", "time": "17:34", "event": "", "img": "images/04.jpg", "views": 487, "reach": 415, "prof": 10, "navi": 442, "link": 0, "caption": "", "memo": "", "tags": []}, {"date": "3/5", "youbi": "木", "time": "18:21", "event": "", "img": "images/05.jpg", "views": 558, "reach": 470, "prof": 12, "navi": 405, "link": 0, "caption": "p h o t o  d a y m o n o", "memo": "", "tags": ["商品紹介"]}, {"date": "3/5", "youbi": "木", "time": "18:23", "event": "", "img": "images/06.jpg", "views": 453, "reach": 389, "prof": 5, "navi": 383, "link": 0, "caption": "m o n o", "memo": "", "tags": []}, {"date": "3/5", "youbi": "木", "time": "18:24", "event": "", "img": "images/07.jpg", "views": 411, "reach": 356, "prof": 14, "navi": 357, "link": 0, "caption": "m o n o new item", "memo": "", "tags": ["商品紹介"]}, {"date": "3/6", "youbi": "金", "time": "17:22", "event": "", "img": "images/08.jpg", "views": 1161, "reach": 864, "prof": 24, "navi": 834, "link": 0, "caption": "\\ お客様のお声 / 素敵なレビューをありがとうございます🥹\n\nガッチガチに編んでます!!\n\n届いた直後は硬い!!\n\nって思いますが使っていくと次第に柔らかくなってきます🫡\n\n沢山使っていただけること\n\n願っております. 手は痛くなります😂", "memo": "", "tags": ["ベネフィット訴求"]}, {"date": "3/7", "youbi": "土", "time": "17:27", "event": "", "img": "images/09.jpg", "views": 533, "reach": 426, "prof": 9, "navi": 464, "link": 0, "caption": "今 回 も 写 真 が 綺 麗 す ぎ る の で\n\nみ て っ て く だ さ い 🥹", "memo": "", "tags": []}, {"date": "3/7", "youbi": "土", "time": "17:30", "event": "", "img": "images/10.jpg", "views": 457, "reach": 387, "prof": 4, "navi": 389, "link": 0, "caption": "n e w  i t e m V i f （ ヴ ィ フ ）\n\n「 鮮 や か 」\n\n静 か な 黒 の 中 に 、一 瞬 の 色 が 走 る 。\n\nそ れ は 、日 常 に 生 ま れ る 小 さ な 鼓 動 。", "memo": "", "tags": ["商品紹介"]}, {"date": "3/7", "youbi": "土", "time": "17:32", "event": "", "img": "images/11.jpg", "views": 444, "reach": 369, "prof": 2, "navi": 376, "link": 0, "caption": "n e w  i t e m V i f . m o n o で は あ ま り み な い\n\nピ ン ク レ ッ ド の ス ト ラ ッ プ\n\n3 点 限 定 ス プ リ ン グ コ レ ク シ ョ ン\n\nピ ン ク 好 き は 要 チ ", "memo": "", "tags": ["商品紹介"]}, {"date": "3/7", "youbi": "土", "time": "17:34", "event": "", "img": "images/12.jpg", "views": 428, "reach": 357, "prof": 2, "navi": 372, "link": 0, "caption": "n e w  i t e m G e r m é （ ジ ェ ル メ ）\n\n「 芽 吹 き 」\n\n静 か な 大 地 の 奥 で 、新 し い 命 が 目 を 覚 ま す .\n\nそ れ は 、は じ ま り の 合 図 .", "memo": "", "tags": ["商品紹介"]}, {"date": "3/7", "youbi": "土", "time": "17:37", "event": "", "img": "images/13.jpg", "views": 426, "reach": 349, "prof": 3, "navi": 373, "link": 0, "caption": "n e w  i t e m G e r m é こ れ ま で 定 番 に は な か っ た\n\nグ リ ー ン の ス ト ラ ッ プ\n\n3 点 限 定 ス プ リ ン グ コ レ ク シ ョ ン\n\n春 の 淡 い 色 を 取 り 入 ", "memo": "", "tags": ["商品紹介"]}, {"date": "3/9", "youbi": "月", "time": "02:05", "event": "", "img": "images/14.jpg", "views": 554, "reach": 457, "prof": 16, "navi": 421, "link": 0, "caption": "Spring Collection 準 備 が 進 ん で い ま す 📦 \\ 3 / 13 - 3 / 15 /", "memo": "", "tags": ["商品紹介"]}, {"date": "3/9", "youbi": "月", "time": "02:08", "event": "", "img": "images/15.jpg", "views": 426, "reach": 368, "prof": 1, "navi": 361, "link": 0, "caption": "ジ ェ ル メ Germé \\ 3 / 13 - 3 / 15 /", "memo": "", "tags": ["商品紹介"]}, {"date": "3/9", "youbi": "月", "time": "02:11", "event": "", "img": "images/16.jpg", "views": 398, "reach": 341, "prof": 8, "navi": 332, "link": 0, "caption": "Vif ヴ ィ フ \\ 3 / 13 - 3 / 15 /", "memo": "", "tags": ["商品紹介"]}, {"date": "3/10", "youbi": "火", "time": "17:28", "event": "", "img": "images/17.jpg", "views": 433, "reach": 334, "prof": 11, "navi": 346, "link": 0, "caption": "い よ い よ オ ー プ ン の 日 が 近 づ い て き た . . . 3/13 21:00- shop open ス プ リ ン グ コ レ ク シ ョ ン は\n\n各 3 点 限 定 で す !!", "memo": "", "tags": ["商品紹介"]}, {"date": "3/10", "youbi": "火", "time": "17:28", "event": "", "img": "images/18.jpg", "views": 348, "reach": 275, "prof": 5, "navi": 295, "link": 0, "caption": "Spring collection 3/13 21:00-", "memo": "", "tags": []}, {"date": "3/10", "youbi": "火", "time": "17:29", "event": "", "img": "images/19.jpg", "views": 319, "reach": 259, "prof": 2, "navi": 284, "link": 0, "caption": "Spring Collection\n\n3/13 21:00", "memo": "", "tags": ["商品紹介"]}, {"date": "3/10", "youbi": "火", "time": "17:30", "event": "", "img": "images/20.jpg", "views": 312, "reach": 260, "prof": 2, "navi": 278, "link": 0, "caption": "Spring Collection\n\n3/13 21:00-", "memo": "", "tags": ["商品紹介"]}, {"date": "3/10", "youbi": "火", "time": "17:31", "event": "", "img": "images/21.jpg", "views": 322, "reach": 255, "prof": 8, "navi": 284, "link": 0, "caption": "Spring Collection\n\n3/13 21:00-", "memo": "", "tags": ["商品紹介"]}, {"date": "3/11", "youbi": "水", "time": "19:54", "event": "", "img": "images/22.jpg", "views": 665, "reach": 544, "prof": 16, "navi": 526, "link": 0, "caption": "", "memo": "", "tags": []}, {"date": "3/11", "youbi": "水", "time": "19:55", "event": "", "img": "images/23.jpg", "views": 561, "reach": 456, "prof": 3, "navi": 470, "link": 0, "caption": "shop open 3/13  21:00- いよいよ明日から!!", "memo": "", "tags": []}, {"date": "3/12", "youbi": "木", "time": "17:48", "event": "", "img": "images/24.jpg", "views": 559, "reach": 438, "prof": 24, "navi": 477, "link": 0, "caption": "", "memo": "", "tags": []}, {"date": "3/13", "youbi": "金", "time": "05:00", "event": "Spring Collection オープン", "img": "images/25.jpg", "views": 530, "reach": 380, "prof": 16, "navi": 441, "link": 59, "caption": "", "memo": "", "tags": ["販売会", "イベント"]}, {"date": "3/13", "youbi": "金", "time": "05:34", "event": "Spring Collection オープン", "img": "images/26.jpg", "views": 453, "reach": 324, "prof": 4, "navi": 377, "link": 30, "caption": "今 回 ス プ リ ン グ コ レ ク シ ョ ン は\n\n各 3 点 限 定！ す で に V i f は 残 り 2 点 に な り ま し た 😭 ✨ お見逃しなく!! 👆", "memo": "", "tags": ["販売会", "イベント", "商品紹介"]}, {"date": "3/13", "youbi": "金", "time": "06:31", "event": "Spring Collection オープン", "img": "images/27.jpg", "views": 460, "reach": 327, "prof": 6, "navi": 391, "link": 28, "caption": "", "memo": "", "tags": ["販売会", "イベント"]}, {"date": "3/13", "youbi": "金", "time": "18:39", "event": "Spring Collection オープン", "img": "images/28.jpg", "views": 591, "reach": 441, "prof": 16, "navi": 420, "link": 0, "caption": "飛び上がるほど嬉しい\n\nこんなレビューが届きました.... 😳 ________ う、嬉しすぎます🥹\n本当にありとうございます!!!!", "memo": "", "tags": ["販売会", "イベント", "ベネフィット訴求"]}, {"date": "3/13", "youbi": "金", "time": "18:45", "event": "Spring Collection オープン", "img": "images/29.jpg", "views": 552, "reach": 391, "prof": 7, "navi": 445, "link": 42, "caption": "点になりました!! 大 絶 賛 い た だ い た\n\nV o i d 2 残り ☝️", "memo": "", "tags": ["販売会", "イベント", "商品紹介"]}, {"date": "3/14", "youbi": "土", "time": "06:35", "event": "Spring Collection オープン", "img": "images/30.jpg", "views": 596, "reach": 476, "prof": 29, "navi": 510, "link": 0, "caption": "", "memo": "", "tags": ["販売会"]}, {"date": "3/14", "youbi": "土", "time": "06:35", "event": "Spring Collection オープン", "img": "images/31.jpg", "views": 484, "reach": 395, "prof": 13, "navi": 429, "link": 0, "caption": "", "memo": "", "tags": ["販売会"]}, {"date": "3/14", "youbi": "土", "time": "19:53", "event": "Spring Collection オープン", "img": "images/32.jpg", "views": 457, "reach": 373, "prof": 8, "navi": 413, "link": 0, "caption": "Germé sold out", "memo": "", "tags": ["販売会", "商品紹介"]}, {"date": "3/14", "youbi": "土", "time": "19:55", "event": "Spring Collection オープン", "img": "images/33.jpg", "views": 423, "reach": 338, "prof": 4, "navi": 377, "link": 11, "caption": "V i f 1 ラスト　　点になりました!!", "memo": "", "tags": ["販売会", "商品紹介"]}, {"date": "3/14", "youbi": "土", "time": "19:57", "event": "Spring Collection オープン", "img": "images/34.jpg", "views": 409, "reach": 321, "prof": 1, "navi": 350, "link": 14, "caption": "T e r r a スプリングコレクション\n\nこちらもラスト２点です🥹✨ 👆", "memo": "", "tags": ["販売会", "商品紹介"]}, {"date": "3/15", "youbi": "日", "time": "05:06", "event": "Spring Collection 最終日", "img": "images/35.jpg", "views": 437, "reach": 344, "prof": 6, "navi": 357, "link": 18, "caption": "V o i d 残り 2 点です!! \\ 本日23:59まで / 👆", "memo": "", "tags": ["販売会", "イベント", "商品紹介"]}, {"date": "3/15", "youbi": "日", "time": "06:30", "event": "Spring Collection 最終日", "img": "images/36.jpg", "views": 368, "reach": 307, "prof": 7, "navi": 314, "link": 8, "caption": "", "memo": "", "tags": ["販売会", "イベント"]}, {"date": "3/15", "youbi": "日", "time": "17:38", "event": "Spring Collection 最終日", "img": "images/37.jpg", "views": 370, "reach": 310, "prof": 9, "navi": 327, "link": 0, "caption": "thank you 📦🪶", "memo": "", "tags": ["販売会", "イベント", "ベネフィット訴求"]}, {"date": "3/16", "youbi": "月", "time": "18:08", "event": "", "img": "images/38.jpg", "views": 778, "reach": 632, "prof": 28, "navi": 601, "link": 0, "caption": "______ _______ ________ _____ ありがとうございます🥹🥹\n\nBASEオープン時にしかレビュー書けないようなのですが\nちょうどオープンの時にご自宅にお届けできたようで\n\nたっくさんの嬉しい言葉をもらっちゃいました🥹", "memo": "", "tags": ["ベネフィット訴求"]}, {"date": "3/18", "youbi": "水", "time": "17:25", "event": "", "img": "images/39.jpg", "views": 607, "reach": 479, "prof": 18, "navi": 474, "link": 0, "caption": "m o n o", "memo": "", "tags": []}, {"date": "3/20", "youbi": "金", "time": "18:46", "event": "", "img": "images/40.jpg", "views": 2416, "reach": 1917, "prof": 45, "navi": 1204, "link": 0, "caption": "シ ッ ク な コ ー デ の\n\nワ ン ポ イ ン ト に し て み た よ", "memo": "", "tags": []}, {"date": "3/21", "youbi": "土", "time": "23:06", "event": "", "img": "images/41.jpg", "views": 708, "reach": 583, "prof": 12, "navi": 523, "link": 0, "caption": "や っ ぱ り p u r p l e 可 愛 い よ ね . . .", "memo": "", "tags": []}, {"date": "3/21", "youbi": "土", "time": "23:07", "event": "", "img": "images/42.jpg", "views": 599, "reach": 499, "prof": 2, "navi": 518, "link": 0, "caption": "絶 妙 な p u r p l e × g r e e n", "memo": "", "tags": []}, {"date": "3/21", "youbi": "土", "time": "23:10", "event": "", "img": "images/43.jpg", "views": 570, "reach": 464, "prof": 0, "navi": 495, "link": 0, "caption": "", "memo": "", "tags": []}, {"date": "3/21", "youbi": "土", "time": "23:11", "event": "", "img": "images/44.jpg", "views": 610, "reach": 450, "prof": 7, "navi": 483, "link": 54, "caption": "", "memo": "", "tags": []}, {"date": "3/22", "youbi": "日", "time": "19:28", "event": "", "img": "images/45.jpg", "views": 557, "reach": 456, "prof": 7, "navi": 472, "link": 0, "caption": "mono Spring Collection", "memo": "", "tags": ["商品紹介"]}, {"date": "3/22", "youbi": "日", "time": "19:31", "event": "", "img": "images/46.jpg", "views": 491, "reach": 403, "prof": 4, "navi": 423, "link": 0, "caption": "実 は 一 番 人 気 .\n\n当 店 の ア イ テ ム の 中 で \n\n唯 一 ピ ン ク 系 が 入 っ て る ア イ テ ム", "memo": "", "tags": []}, {"date": "3/22", "youbi": "日", "time": "19:32", "event": "", "img": "images/47.jpg", "views": 497, "reach": 381, "prof": 14, "navi": 404, "link": 0, "caption": "で も 私 の お 気 に 入 り は こ れ !\n\nグ リ ー ン が 可 愛 い の ! !\n\n合 わ せ や す い ! !", "memo": "", "tags": []}, {"date": "3/23", "youbi": "月", "time": "17:42", "event": "", "img": "images/48.jpg", "views": 564, "reach": 466, "prof": 13, "navi": 446, "link": 21, "caption": "オープン1日前に\n\ngetできる\n\n事前案内の受付は明日まで!!! 公式ライン追加で事前配信されます!!!", "memo": "", "tags": []}, {"date": "3/23", "youbi": "月", "time": "17:43", "event": "", "img": "images/49.jpg", "views": 473, "reach": 393, "prof": 9, "navi": 390, "link": 18, "caption": "毎回売り切れてしまうアイテムたちを\n\n事前にチェックして\n\n誰よりも早くゲットしよう!!!💨 👆", "memo": "", "tags": []}, {"date": "3/24", "youbi": "火", "time": "20:03", "event": "公式ライン事前オープン販売", "img": "images/50.jpg", "views": 1975, "reach": 1673, "prof": 56, "navi": 1336, "link": 0, "caption": "今日まで限定なんですけど\n\n知ってますか?? 口空いてますよ👄", "memo": "", "tags": ["イベント"]}, {"date": "3/24", "youbi": "火", "time": "20:06", "event": "公式ライン事前オープン販売", "img": "images/51.jpg", "views": 1743, "reach": 1366, "prof": 42, "navi": 1384, "link": 98, "caption": "今日まで参加可能!!\n\n公式ライン事前オープン販売!! 何それ...?\n→ライン友達限定でオープン1日前に\n購入できちゃう有利なシステム!! ☝️", "memo": "", "tags": ["イベント"]}, {"date": "3/25", "youbi": "水", "time": "21:47", "event": "", "img": "images/52.jpg", "views": 855, "reach": 662, "prof": 58, "navi": 630, "link": 0, "caption": "3 / 27  21 : 00 -", "memo": "", "tags": []}, {"date": "3/25", "youbi": "水", "time": "21:48", "event": "", "img": "images/53.jpg", "views": 709, "reach": 557, "prof": 30, "navi": 588, "link": 0, "caption": "", "memo": "", "tags": []}, {"date": "3/26", "youbi": "木", "time": "23:54", "event": "", "img": "images/54.jpg", "views": 674, "reach": 508, "prof": 43, "navi": 560, "link": 0, "caption": "", "memo": "", "tags": []}, {"date": "3/27", "youbi": "金", "time": "05:02", "event": "販売会", "img": "images/55.jpg", "views": 509, "reach": 378, "prof": 9, "navi": 419, "link": 52, "caption": "", "memo": "", "tags": ["販売会"]}, {"date": "3/27", "youbi": "金", "time": "07:09", "event": "販売会", "img": "images/56.jpg", "views": 492, "reach": 392, "prof": 3, "navi": 406, "link": 0, "caption": "こちらのアイテムすでに完売!! なんと... 事前オープンで売り切れてました😱", "memo": "", "tags": ["販売会"]}, {"date": "3/27", "youbi": "金", "time": "07:12", "event": "販売会", "img": "images/57.jpg", "views": 473, "reach": 357, "prof": 1, "navi": 403, "link": 31, "caption": "_ \\ こちら残り 1 点 ずつです!! / Last item 😱 👆", "memo": "", "tags": ["販売会"]}, {"date": "3/27", "youbi": "金", "time": "22:32", "event": "販売会", "img": "images/58.jpg", "views": 649, "reach": 497, "prof": 27, "navi": 519, "link": 31, "caption": "ハンドストラップ Noir Wood 2 残り　　　点 👆", "memo": "", "tags": ["販売会"]}, {"date": "3/28", "youbi": "土", "time": "17:06", "event": "販売会", "img": "images/59.jpg", "views": 620, "reach": 466, "prof": 15, "navi": 459, "link": 50, "caption": "👆", "memo": "", "tags": ["販売会"]}, {"date": "3/28", "youbi": "土", "time": "18:57", "event": "販売会", "img": "images/60.jpg", "views": 518, "reach": 408, "prof": 17, "navi": 407, "link": 19, "caption": "👆", "memo": "", "tags": ["販売会"]}, {"date": "3/29", "youbi": "日", "time": "00:55", "event": "販売会", "img": "images/61.jpg", "views": 495, "reach": 403, "prof": 7, "navi": 408, "link": 21, "caption": "👆", "memo": "", "tags": ["販売会"]}, {"date": "3/29", "youbi": "日", "time": "07:01", "event": "販売会", "img": "images/62.jpg", "views": 533, "reach": 445, "prof": 7, "navi": 446, "link": 21, "caption": "", "memo": "", "tags": ["販売会"]}, {"date": "3/30", "youbi": "月", "time": "20:07", "event": "", "img": "images/63.jpg", "views": 991, "reach": 789, "prof": 18, "navi": 771, "link": 0, "caption": "4 月 は ハ ン ド ス ト ラ ッ プ の\n\n一 点 モ ノ 販 売 会 を\n\n行 う 予 定 で す ! ! お 楽 し み に ! ! ! m o n o", "memo": "", "tags": []}, {"date": "3/31", "youbi": "火", "time": "18:10", "event": "", "img": "images/64.jpg", "views": 806, "reach": 642, "prof": 20, "navi": 660, "link": 0, "caption": "4/10 shop open", "memo": "", "tags": []}];
+
+const TAG_COLORS = {
+  "販売会":     "tag-sale",
+  "イベント":     "tag-launch",
+  "ベネフィット訴求":"tag-benefit",
+  "商品紹介":       "tag-product",
+  "コラボ":         "tag-collab",
+  "POPUP":          "tag-popup",
+  "再販":           "tag-restock",
+  "その他":         "tag-other"
+};
+
+let activeTagFilter = "";
+let editingTagIdx = -1;
+
+function fw() {
+  return 7919;
+}
+
+function getFiltered() {
+  const kw = document.getElementById('searchInput').value.toLowerCase().trim();
+  const youbi = document.getElementById('filterYoubi').value;
+  const sort = document.getElementById('sortBy').value;
+  let r = entries.map((e,i) => ({...e, _i:i}));
+  if (kw) r = r.filter(e =>
+    [e.date, e.youbi, e.caption, e.memo, e.event, ...(e.tags||[])].join(' ').toLowerCase().includes(kw)
+  );
+  if (youbi) r = r.filter(e => e.youbi === youbi);
+  if (activeTagFilter) r = r.filter(e => (e.tags||[]).includes(activeTagFilter));
+  if (sort === 'views_desc') r.sort((a,b) => b.views - a.views);
+  else if (sort === 'rate_desc') r.sort((a,b) => (b.views/fw()) - (a.views/fw()));
+  else if (sort === 'link_desc') r.sort((a,b) => b.link - a.link);
+  else r.sort((a,b) => a._i - b._i);
+  return r;
+}
+
+function pct(n, d) {
+  if (!d) return '—';
+  return (n/d*100).toFixed(2) + '%';
+}
+
+function rateClass(views, fwn) {
+  if (!fwn) return '';
+  const r = views/fwn*100;
+  return r >= 16 ? 'rate-high' : r >= 12 ? 'rate-mid' : 'rate-low';
+}
+
+function render() {
+  const tbody = document.getElementById('tableBody');
+  const noRes = document.getElementById('noResults');
+  const filtered = getFiltered();
+  const fwn = fw();
+
+  // Stats
+  if (filtered.length) {
+    const avg = Math.round(filtered.reduce((s,e)=>s+e.views,0)/filtered.length);
+    const avgR = fwn ? (filtered.reduce((s,e)=>s+e.views,0)/filtered.length/fwn*100).toFixed(2)+'%' : '—';
+    const maxV = Math.max(...filtered.map(e=>e.views));
+    const totLink = filtered.reduce((s,e)=>s+e.link,0);
+  }
+
+  const kw = document.getElementById('searchInput').value.trim();
+  const youbi = document.getElementById('filterYoubi').value;
+  document.getElementById('resultCount').textContent = (kw||youbi||activeTagFilter) ? filtered.length+'件' : '';
+
+  const cardView = document.getElementById('cardView');
+  if (!filtered.length) { tbody.innerHTML=''; if(cardView)cardView.innerHTML=''; noRes.style.display=''; return; }
+  noRes.style.display='none';
+
+  tbody.innerHTML = filtered.map((e, di) => {
+    const i = e._i;
+    const fwn = fw();
+    const viewRate = fwn ? pct(e.views, fwn) : '—';
+    const profRate = e.views ? pct(e.prof, e.views) : '—';
+    const naviRate = e.views ? pct(e.navi, e.views) : '—';
+    const rc = rateClass(e.views, fwn);
+
+    const imgHtml = e.img
+      ? `<div class="img-wrap" onclick="openLightbox(${i})">
+           <img src="${e.img}" loading="lazy">
+           <span class="img-zoom">🔍</span>
+         </div>`
+      : `<div class="img-placeholder" onclick="triggerImg(${i})">
+           <input type="file" accept="image/*" onchange="onImg(event,${i})" id="fi_${i}" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:10;">
+           <div class="img-placeholder-icon">📷</div>
+           <div class="img-placeholder-text">画像を追加</div>
+         </div>`;
+
+    const tagsHtml = (e.tags||[]).map(t =>
+      `<span class="tag ${TAG_COLORS[t]||'tag-other'}">${t}</span>`
+    ).join('') + `<span class="add-tag-btn" onclick="openTagModal(${i})">＋</span>`;
+
+    const bg = di%2===0 ? '#ffffff' : '#faf7f4';
+    const isSale = (e.tags||[]).includes('販売会');
+    const rowClass = isSale ? 'row-sale' : '';
+    const rowStyle = isSale ? '' : `style="background:${bg}"`;
+    return `<tr class="${rowClass}" ${rowStyle}>
+      <td class="td-num">${di+1}</td>
+      <td class="td-date">${e.date}</td>
+      <td><span class="td-youbi">${e.youbi}</span></td>
+      <td class="td-event${e.event?' has-event':''}">${e.event||''}</td>
+      <td class="img-cell">${imgHtml}</td>
+      <td style="font-weight:500">${e.views.toLocaleString()}</td>
+      <td>${e.reach.toLocaleString()}</td>
+      <td>${e.prof}</td>
+      <td style="font-size:11px">${profRate}</td>
+      <td>${e.link}</td>
+      <td class="tags-cell">${tagsHtml}</td>
+      <td><textarea class="memo-input" rows="2" placeholder="メモ..."
+        oninput="entries[${i}].memo=this.value">${e.memo||''}</textarea></td>
+    </tr>`;
+  }).join('');
+
+  // ============ カードビュー（スマホ用）レンダリング ============
+  if (cardView) {
+    cardView.innerHTML = filtered.map((e, di) => {
+      const i = e._i;
+      const fwn = fw();
+      const viewRate = fwn ? pct(e.views, fwn) : '—';
+      const profRate = e.views ? pct(e.prof, e.views) : '—';
+      const naviRate = e.views ? pct(e.navi, e.views) : '—';
+      const rc = rateClass(e.views, fwn);
+      const isSale = (e.tags||[]).includes('販売会');
+      const cardClass = isSale ? 'story-card card-sale' : 'story-card';
+
+      const imgBlock = e.img
+        ? `<img class="card-img" src="${e.img}" loading="lazy" onclick="openLightbox(${i})">`
+        : `<div class="card-img-placeholder" onclick="document.getElementById('cfi_${i}').click()">
+             <input type="file" accept="image/*" onchange="onImg(event,${i})" id="cfi_${i}" style="display:none">
+             <div style="font-size:24px">📷</div>
+             <div style="font-size:11px;margin-top:4px">画像を追加</div>
+           </div>`;
+
+      const tagsHtml = (e.tags||[]).map(t =>
+        `<span class="tag ${TAG_COLORS[t]||'tag-other'}">${t}</span>`
+      ).join('') + `<span class="add-tag-btn" onclick="openTagModal(${i})">＋</span>`;
+
+      const captionHtml = e.caption ? `<div class="card-caption">${e.caption}</div>` : '';
+      const eventHtml = e.event ? `<div class="card-event">📌 ${e.event}</div>` : '';
+
+      return `<div class="${cardClass}">
+        <div class="card-header">
+          <div class="card-date-block">
+            <span class="card-num">#${di+1}</span>
+            <span class="card-date">${e.date}</span>
+            <span class="card-youbi-pill">${e.youbi}</span>
+          </div>
+          <span class="card-time">${e.time}</span>
+        </div>
+        ${eventHtml}
+        ${imgBlock}
+        ${captionHtml}
+        <div class="card-stats">
+          <div class="card-stat">
+            <div class="card-stat-label">閲覧数</div>
+            <div class="card-stat-value">${e.views.toLocaleString()}</div>
+          </div>
+          <div class="card-stat">
+            <div class="card-stat-label">閲覧率</div>
+            <div class="card-stat-value ${rc}">${viewRate}</div>
+          </div>
+          <div class="card-stat">
+            <div class="card-stat-label">リーチ</div>
+            <div class="card-stat-value">${e.reach.toLocaleString()}</div>
+          </div>
+          <div class="card-stat">
+            <div class="card-stat-label">プロフアクセス</div>
+            <div class="card-stat-value">${e.prof}</div>
+          </div>
+          <div class="card-stat">
+            <div class="card-stat-label">プロフアクセス率</div>
+            <div class="card-stat-value">${profRate}</div>
+          </div>
+          <div class="card-stat">
+            <div class="card-stat-label">リンクCT</div>
+            <div class="card-stat-value">${e.link}</div>
+          </div>
+        </div>
+        <div class="card-tags">${tagsHtml}</div>
+        <div class="card-memo">
+          <textarea rows="2" placeholder="メモ..." oninput="entries[${i}].memo=this.value">${e.memo||''}</textarea>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function applyFilters() { render(); }
+function clearFilters() {
+  document.getElementById('searchInput').value='';
+  document.getElementById('filterYoubi').value='';
+  document.getElementById('sortBy').value='id';
+  setTagFilter(document.querySelector('.tag-filter-btn[data-tag=""]'), '');
+  render();
+}
+
+function setTagFilter(btn, tag) {
+  document.querySelectorAll('.tag-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeTagFilter = tag;
+  render();
+}
+
+function triggerImg(i) {
+  const el = document.getElementById('fi_'+i);
+  if (el) el.click();
+}
+
+function onImg(e, i) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      const ratio = Math.min(400/img.width, 1);
+      c.width = img.width*ratio; c.height = img.height*ratio;
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      entries[i].img = c.toDataURL('image/jpeg', 0.8);
+      render();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+let lbIdx = -1;
+function openLightbox(i) {
+  lbIdx = i;
+  const e = entries[i];
+  document.getElementById('lbImg').src = e.img;
+  document.getElementById('lbMeta').textContent =
+    [e.date, `(${e.youbi})`, e.time, `閲覧数 ${e.views.toLocaleString()}`, e.caption].filter(Boolean).join('　');
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+
+// Tag Modal
+function openTagModal(i) {
+  editingTagIdx = i;
+  const selTags = entries[i].tags || [];
+  document.querySelectorAll('.tag-opt').forEach(b => {
+    b.classList.toggle('sel', selTags.includes(b.dataset.tag));
+  });
+  document.getElementById('tagModal').classList.add('open');
+}
+function closeTagModal() { document.getElementById('tagModal').classList.remove('open'); }
+function toggleTagOpt(btn) { btn.classList.toggle('sel'); }
+function saveTagModal() {
+  const selTags = [...document.querySelectorAll('.tag-opt.sel')].map(b => b.dataset.tag);
+  if (editingTagIdx >= 0) entries[editingTagIdx].tags = selTags;
+  closeTagModal();
+  render();
+}
+
+function exportHTML() {
+  const entriesJson = JSON.stringify(entries);
+  const html = document.documentElement.outerHTML;
+  const exported = html.replace(
+    /let entries = \[[\s\S]*?\];/,
+    () => 'let entries = ' + entriesJson + ';'
+  );
+  const blob = new Blob([exported], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const today = new Date();
+  const ymd = today.getFullYear() + ('0'+(today.getMonth()+1)).slice(-2) + ('0'+today.getDate()).slice(-2);
+  a.download = `mono_stories_${ymd}.html`;
+  a.click();
+}
+
+render();
+</script>
+</body>
+</html>
